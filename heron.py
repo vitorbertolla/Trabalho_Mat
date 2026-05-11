@@ -1,274 +1,225 @@
 from manim import *
-import numpy as np
 
 class DeducaoHeron(Scene):
     def construct(self):
 
-        # ---------------------------------------------------
+        # -----------------------------
         # TÍTULO
-        # ---------------------------------------------------
-
+        # -----------------------------
         titulo = Text(
             "Dedução da Fórmula de Heron",
-            font_size=40
-        )
+            font_size=38,
+            color=MAROON
+        ).to_edge(UP)
 
         self.play(Write(titulo))
         self.wait(1)
 
-        # CORREÇÃO DO ERRO
-        self.play(titulo.animate.to_edge(UP))
+        # -----------------------------
+        # TRIÂNGULO — posicionado à esquerda para deixar espaço para equações
+        # -----------------------------
+        escala = 0.75
+        A = UP * 2   * escala
+        B = LEFT * 3 * escala + DOWN * 1.5 * escala
+        C = RIGHT * 3 * escala + DOWN * 1.5 * escala
+        H = np.array([0, -1.5 * escala, 0])
 
-        # ---------------------------------------------------
-        # TRIÂNGULO
-        # ---------------------------------------------------
+        # Grupo do triângulo deslocado para a esquerda
+        offset = LEFT * 2.5
 
-        A = np.array([-3, 2, 0])
-        B = np.array([-5, -2, 0])
-        C = np.array([3, -2, 0])
-        H = np.array([-3, -2, 0])
+        A += offset
+        B += offset
+        C += offset
+        H += offset
 
-        triangulo = Polygon(
-            A, B, C,
-            color=WHITE
-        )
+        triangulo = Polygon(B, A, C, color=RED)
+        altura = DashedLine(A, H, color=YELLOW)
 
-        altura = DashedLine(
-            A, H,
-            color=YELLOW
-        )
+        labelA = MathTex("A", font_size=28).next_to(A, UP, buff=0.1)
+        labelB = MathTex("B", font_size=28).next_to(B, LEFT, buff=0.1)
+        labelC = MathTex("C", font_size=28).next_to(C, RIGHT, buff=0.1)
+        labelH = MathTex("H", font_size=28).next_to(H, DOWN, buff=0.1)
 
-        # Labels dos pontos
-        labelA = MathTex("A").next_to(A, UP)
-        labelB = MathTex("B").next_to(B, DOWN)
-        labelC = MathTex("C").next_to(C, DOWN)
-        labelH = MathTex("H").next_to(H, DOWN)
+        labela = MathTex("a", font_size=26).next_to(Line(B, C).get_center(), DOWN)
+        labelb = MathTex("b", font_size=26).next_to(Line(A, C).get_center(), RIGHT, buff=0.1)
+        labelc = MathTex("c", font_size=26).next_to(Line(A, B).get_center(), LEFT, buff=0.1)
 
-        # Labels dos lados
-        h_label = MathTex("h").next_to(altura, LEFT)
+        labelx  = MathTex("x",   font_size=24).next_to(Line(B, H).get_center(), DOWN)
+        labelax = MathTex("a{-}x", font_size=24).next_to(Line(H, C).get_center(), DOWN)
+        labelh  = MathTex("h",   font_size=24).next_to(altura.get_center(), RIGHT, buff=0.1)
 
-        x_label = MathTex("x").next_to(
-            (B + H) / 2,
-            DOWN
-        )
-
-        ax_label = MathTex("a-x").next_to(
-            (H + C) / 2,
-            DOWN
-        )
-
-        a_label = MathTex("a").next_to(
-            Line(B, C),
-            DOWN
-        )
-
-        b_label = MathTex("b").next_to(
-            Line(A, C).get_center(),
-            RIGHT
-        )
-
-        c_label = MathTex("c").next_to(
-            Line(A, B).get_center(),
-            LEFT
+        grupo_triangulo = VGroup(
+            triangulo, altura,
+            labelA, labelB, labelC, labelH,
+            labela, labelb, labelc,
+            labelx, labelax, labelh,
         )
 
         self.play(Create(triangulo))
         self.play(Create(altura))
-
         self.play(
-            Write(labelA),
-            Write(labelB),
-            Write(labelC),
-            Write(labelH),
+            Write(labelA), Write(labelB), Write(labelC), Write(labelH),
+            Write(labela), Write(labelb), Write(labelc),
+            Write(labelx),  Write(labelax),  Write(labelh),
+        )
+        self.wait(2)
+
+        # -----------------------------
+        # PITÁGORAS — coluna da direita
+        # -----------------------------
+        eq1 = MathTex(r"(I)\quad c^2 = h^2 + x^2", font_size=30)
+        eq2 = MathTex(r"(II)\quad b^2 = h^2 + (a-x)^2", font_size=30)
+
+        grupo_pit = VGroup(eq1, eq2).arrange(DOWN, aligned_edge=LEFT, buff=0.4)
+        grupo_pit.to_corner(RIGHT + DOWN).shift(UP * 0.3)
+
+        self.play(Write(grupo_pit))
+        self.wait(2)
+
+        # -----------------------------
+        # SUBSTITUIÇÃO — coluna da direita, acima de Pitágoras
+        # -----------------------------
+        sub1 = MathTex(r"h^2 = c^2 - x^2", font_size=28)
+        sub2 = MathTex(r"b^2 = c^2 - x^2 + (a-x)^2", font_size=28)
+        sub3 = MathTex(r"b^2 = c^2 - x^2 + a^2 - 2ax + x^2", font_size=28)
+        sub4 = MathTex(r"2ax = a^2 - b^2 + c^2", font_size=28)
+        sub5 = MathTex(r"x = \dfrac{a^2 - b^2 + c^2}{2a}", font_size=30)
+
+        grupo_sub = VGroup(sub1, sub2, sub3, sub4, sub5).arrange(
+            DOWN, aligned_edge=LEFT, buff=0.3
+        )
+        # Posiciona acima das equações de Pitágoras, alinhado à direita
+        grupo_sub.next_to(grupo_pit, UP, buff=0.4, aligned_edge=LEFT)
+        # Garante que não saia da tela pelo topo
+        if grupo_sub.get_top()[1] > titulo.get_bottom()[1] - 0.15:
+            grupo_sub.shift(DOWN * (grupo_sub.get_top()[1] - titulo.get_bottom()[1] + 0.15))
+
+        self.play(Write(sub1))
+        self.wait(0.8)
+        self.play(Write(sub2))
+        self.wait(0.8)
+        self.play(Write(sub3))
+        self.wait(0.8)
+        self.play(Write(sub4))
+        self.wait(0.8)
+        self.play(Write(sub5))
+        self.wait(2)
+
+        # -----------------------------
+        # EXPRESSÃO DE h² — limpa a direita, mantém triângulo
+        # -----------------------------
+        self.play(FadeOut(grupo_pit), FadeOut(grupo_sub))
+
+        h_eq = MathTex(
+            r"h^2 = c^2 - \left(\dfrac{a^2 - b^2 + c^2}{2a}\right)^2",
+            font_size=32,
+        )
+        h_eq2 = MathTex(
+            r"h^2 = \dfrac{4a^2c^2 - (a^2 - b^2 + c^2)^2}{4a^2}",
+            font_size=32,
         )
 
+        grupo_h = VGroup(h_eq, h_eq2).arrange(DOWN, buff=0.5)
+        # Posiciona na metade direita da tela, abaixo do título
+        grupo_h.move_to(RIGHT * 2.2 + DOWN * 0.5)
+        # Ajusta se necessário para não colidir com o triângulo
+        grupo_h.shift(UP * 0.2)
+
+        self.play(Write(h_eq))
+        self.wait(2)
+        self.play(Write(h_eq2))
+        self.wait(2)
+
+        # -----------------------------
+        # ÁREA — limpa tudo, começa nova seção centralizada
+        # -----------------------------
         self.play(
-            Write(h_label),
-            Write(x_label),
-            Write(ax_label),
-            Write(a_label),
-            Write(b_label),
-            Write(c_label),
+            FadeOut(grupo_triangulo),
+            FadeOut(h_eq),
         )
 
-        self.wait(2)
-
-        # ---------------------------------------------------
-        # EQUAÇÃO I
-        # ---------------------------------------------------
-
-        eq1 = MathTex(
-            r"(I)\quad c^2 = h^2 + x^2",
-            r"\Rightarrow",
-            r"h^2 = c^2 - x^2"
-        ).scale(0.8)
-
-        eq1.to_corner(UR)
-
-        self.play(Write(eq1))
-        self.wait(2)
-
-        # ---------------------------------------------------
-        # EQUAÇÃO II
-        # ---------------------------------------------------
-
-        eq2 = MathTex(
-            r"(II)\quad b^2 = h^2 + (a-x)^2"
-        ).scale(0.8)
-
-        eq2.next_to(eq1, DOWN, aligned_edge=LEFT)
-
-        self.play(Write(eq2))
-        self.wait(2)
-
-        # Substituição
-        substituicao = MathTex(
-            r"b^2 = c^2 - x^2 + (a-x)^2"
-        ).scale(0.8)
-
-        substituicao.next_to(
-            eq2,
-            DOWN,
-            aligned_edge=LEFT
+        area1 = MathTex(r"A = \dfrac{a \cdot h}{2}", font_size=38)
+        area2 = MathTex(r"A^2 = \dfrac{a^2 h^2}{4}", font_size=38)
+        area3 = MathTex(
+            r"A^2 = \dfrac{4a^2c^2 - (a^2 - b^2 + c^2)^2}{16}",
+            font_size=34,
         )
 
-        self.play(Write(substituicao))
-        self.wait(1)
-
-        # Expansão
-        expansao1 = MathTex(
-            r"= c^2 - x^2 + a^2 - 2ax + x^2"
-        ).scale(0.8)
-
-        expansao1.next_to(
-            substituicao,
-            DOWN,
-            aligned_edge=LEFT
-        )
-
-        self.play(Write(expansao1))
-        self.wait(1)
-
-        # Resultado x
-        resultado_x = MathTex(
-            r"\Rightarrow x = \frac{a^2 - b^2 + c^2}{2a}"
-        ).scale(0.8)
-
-        resultado_x.next_to(
-            expansao1,
-            DOWN,
-            aligned_edge=LEFT
-        )
-
-        self.play(Write(resultado_x))
-        self.wait(3)
-
-        # ---------------------------------------------------
-        # SUBSTITUIÇÃO EM h²
-        # ---------------------------------------------------
-
-        self.play(
-            FadeOut(eq1),
-            FadeOut(eq2),
-            FadeOut(substituicao),
-            FadeOut(expansao1),
-            FadeOut(resultado_x),
-        )
-
-        substitui_h = MathTex(
-            r"h^2 = c^2 - \left(",
-            r"\frac{a^2 - b^2 + c^2}{2a}",
-            r"\right)^2"
-        ).scale(0.75)
-
-        substitui_h.to_edge(LEFT)
-
-        self.play(Write(substitui_h))
-        self.wait(2)
-
-        eq_h2 = MathTex(
-            r"\Rightarrow h^2 =",
-            r"\frac{4a^2c^2 - (a^2 - b^2 + c^2)^2}{4a^2}"
-        ).scale(0.75)
-
-        eq_h2.next_to(substitui_h, DOWN)
-
-        self.play(Write(eq_h2))
-        self.wait(3)
-
-        # ---------------------------------------------------
-        # ÁREA
-        # ---------------------------------------------------
-
-        area1 = MathTex(
-            r"A = \frac{a \cdot h}{2}"
-        ).scale(0.8)
-
-        area1.to_edge(RIGHT)
+        grupo_area = VGroup(area1, area2, area3).arrange(DOWN, buff=0.55)
+        grupo_area.move_to(DOWN * 0.3)
 
         self.play(Write(area1))
         self.wait(1)
-
-        area2 = MathTex(
-            r"A^2 = \frac{a^2 h^2}{4}"
-        ).scale(0.8)
-
-        area2.next_to(area1, DOWN)
-
         self.play(Write(area2))
+        self.wait(1)
+        self.play(Write(area3))
         self.wait(2)
 
-        # ---------------------------------------------------
-        # SUBSTITUIÇÃO FINAL
-        # ---------------------------------------------------
+        # -----------------------------
+        # FATORAÇÃO
+        # -----------------------------
+        fator1 = MathTex(
+            r"A^2 = \dfrac{(2ac)^2 - (a^2 - b^2 + c^2)^2}{16}",
+            font_size=34,
+        )
+        fator2 = MathTex(
+            r"A^2 = \dfrac{[2ac + (a^2-b^2+c^2)]\,[2ac - (a^2-b^2+c^2)]}{16}",
+            font_size=28,
+        )
+        fator3 = MathTex(
+            r"A^2 = \dfrac{[(a+c)^2 - b^2]\,[b^2 - (a-c)^2]}{16}",
+            font_size=32,
+        )
+
+        grupo_fator = VGroup(fator1, fator2, fator3).arrange(DOWN, buff=0.5)
+        grupo_fator.move_to(DOWN * 0.3)
+
+        self.play(FadeOut(grupo_area), FadeOut(h_eq2))
+        self.play(Write(fator1))
+        self.wait(2)
+        self.play(Write(fator2))
+        self.wait(2)
+        self.play(Write(fator3))
+        self.wait(2)
+
+        # -----------------------------
+        # EXPRESSÃO FINAL — limpa tudo, exibe em duas linhas
+        # -----------------------------
+        self.play(FadeOut(grupo_fator))
 
         final1 = MathTex(
-            r"A^2 =",
-            r"\frac{(2ac)^2 - (a^2 - b^2 + c^2)^2}{16}"
-        ).scale(0.7)
-
-        final1.to_edge(DOWN)
+            r"A^2 = \frac{(a+c-b)}{2}"
+            r"\cdot \frac{(a-c+b)}{2}"
+            r"\cdot \frac{(-a+c+b)}{2}"
+            r"\cdot \frac{(a+b+c)}{2}",
+            font_size=30,
+        )
+        final1.move_to(UP * 0.5)
 
         self.play(Write(final1))
         self.wait(3)
 
-        # Fatoração
-        fatoracao = MathTex(
-            r"A^2 =",
-            r"\frac{[2ac+(a^2-b^2+c^2)]",
-            r"[2ac-(a^2-b^2+c^2)]}{16}"
-        ).scale(0.65)
-
-        fatoracao.next_to(final1, UP)
-
-        self.play(Write(fatoracao))
-        self.wait(3)
-
-        # ---------------------------------------------------
-        # FÓRMULA DE HERON
-        # ---------------------------------------------------
-
-        self.play(
-            FadeOut(final1),
-            FadeOut(fatoracao),
-        )
+        # -----------------------------
+        # DEFINIÇÃO DE p e FÓRMULA DE HERON
+        # -----------------------------
+        definicao = MathTex(r"p = \dfrac{a+b+c}{2}", font_size=36)
 
         heron = MathTex(
-            r"A^2 = p(p-a)(p-b)(p-c)"
-        ).scale(1.1)
+            r"\boxed{A = \sqrt{p(p-a)(p-b)(p-c)}}",
+            font_size=38,
+        ).set_color(YELLOW)
 
-        heron.set_color(YELLOW)
+        grupo_final = VGroup(definicao, heron).arrange(DOWN, buff=0.7)
+        grupo_final.next_to(final1, DOWN, buff=0.6)
 
-        definicao_p = MathTex(
-            r"p = \frac{a+b+c}{2}"
-        ).scale(0.9)
+        # Empurra para baixo se sair da tela
+        if grupo_final.get_bottom()[1] < -3.6:
+            grupo_final.shift(UP * (abs(grupo_final.get_bottom()[1]) - 3.6))
 
-        definicao_p.next_to(
-            heron,
-            DOWN
-        )
-
+        self.play(Write(definicao))
+        self.wait(1)
         self.play(Write(heron))
-        self.play(Write(definicao_p))
+        self.wait(3)
 
-        self.wait(5)
+        self.play(Circumscribe(heron, color=YELLOW, run_time=2))
+        self.wait(3)
